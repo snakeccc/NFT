@@ -1,105 +1,63 @@
-const {
-  time,
-  loadFixture,
-} = require("@nomicfoundation/hardhat-network-helpers");
-const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
+const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
 const { expect } = require("chai");
 
-describe("Contract", function () {
-  // We define a fixture to reuse the same setup in every test.
-  // We use loadFixture to run this setup once, snapshot that state,
-  // and reset Hardhat Network to that snapshot in every test.
-  async function deployOneYearLockFixture() {
-    const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
-    const ONE_GWEI = 1_000_000_000;
+describe("Token contract", function () {
+  async function deployTokenFixture() {
+    const Token = await ethers.getContractFactory("Token");
+    const [owner] = await ethers.getSigners();
 
-    const lockedAmount = ONE_GWEI;
-    const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
+    const hardhatToken = await Token.deploy();
 
-    // Contracts are deployed using the first signer/account by default
-    const [owner, otherAccount] = await ethers.getSigners();
+    await hardhatToken.deployed();
 
-    const Contract = await ethers.getContractFactory("FunToken");
-    const ContractInstance = await Contract.deploy(unlockTime, { value: lockedAmount });
-    console.log(ContractInstance.address);
-
-    return { ContractInstance, unlockTime, lockedAmount, owner, otherAccount };
-
+    // Fixtures can return anything you consider useful for your tests
+    return { Token, hardhatToken, owner };
   }
 
-  describe("Deployment", function () {
-    it("DeploymentFunToken", async function () {
-      const { ContractInstance ,owner} = await loadFixture(deployOneYearLockFixture);
+  it("Should assign the total supply of tokens to the owner", async function () {
+    const { hardhatToken, owner } = await loadFixture(deployTokenFixture);
 
-      
-    });
-
-    
+    const ownerBalance = await hardhatToken.balanceOf(owner.address);
+    expect(await hardhatToken.totalSupply()).to.equal(ownerBalance);
   });
 
- /* describe("Withdrawals", function () {
-    describe("Validations", function () {
-      it("Should revert with the right error if called too soon", async function () {
-        const { lock } = await loadFixture(deployOneYearLockFixture);
+  it("Should transfer tokens between accounts", async function () {
+    const { hardhatToken, owner, addr1, addr2 } = await loadFixture(
+      deployTokenFixture
+    );
 
-        await expect(lock.withdraw()).to.be.revertedWith(
-          "You can't withdraw yet"
-        );
-      });
+    // Transfer 50 tokens from owner to addr1
+    await expect(
+      hardhatToken.transfer(addr1.address, 50)
+    ).to.changeTokenBalances(hardhatToken, [owner, addr1], [-50, 50]);
 
-      it("Should revert with the right error if called from another account", async function () {
-        const { lock, unlockTime, otherAccount } = await loadFixture(
-          deployOneYearLockFixture
-        );
-
-        // We can increase the time in Hardhat Network
-        await time.increaseTo(unlockTime);
-
-        // We use lock.connect() to send a transaction from another account
-        await expect(lock.connect(otherAccount).withdraw()).to.be.revertedWith(
-          "You aren't the owner"
-        );
-      });
-
-      it("Shouldn't fail if the unlockTime has arrived and the owner calls it", async function () {
-        const { lock, unlockTime } = await loadFixture(
-          deployOneYearLockFixture
-        );
-
-        // Transactions are sent using the first signer by default
-        await time.increaseTo(unlockTime);
-
-        await expect(lock.withdraw()).not.to.be.reverted;
-      });
-    });
-
-    describe("Events", function () {
-      it("Should emit an event on withdrawals", async function () {
-        const { lock, unlockTime, lockedAmount } = await loadFixture(
-          deployOneYearLockFixture
-        );
-
-        await time.increaseTo(unlockTime);
-
-        await expect(lock.withdraw())
-          .to.emit(lock, "Withdrawal")
-          .withArgs(lockedAmount, anyValue); // We accept any value as `when` arg
-      });
-    });
-
-    describe("Transfers", function () {
-      it("Should transfer the funds to the owner", async function () {
-        const { lock, unlockTime, lockedAmount, owner } = await loadFixture(
-          deployOneYearLockFixture
-        );
-
-        await time.increaseTo(unlockTime);
-
-        await expect(lock.withdraw()).to.changeEtherBalances(
-          [owner, lock],
-          [lockedAmount, -lockedAmount]
-        );
-      });
-    });
-  });*/
+    // Transfer 50 tokens from addr1 to addr2
+    // We use .connect(signer) to send a transaction from another account
+    await expect(
+      hardhatToken.connect(addr1).transfer(addr2.address, 50)
+    ).to.changeTokenBalances(hardhatToken, [addr1, addr2], [-50, 50]);
+  });
 });
+
+
+
+  
+
+ /* describe("Token contract", async function () {
+     it("Deployments", async function () {
+      
+const [owner] = await ethers.getSigners();
+  
+      const Token = await ethers.getContractFactory("FunToken");
+  
+      const hardhatToken = await Token.deploy();
+  
+      const ownerBalance = await hardhatToken.payToMint(owner.address,'https://gateway.pinata.cloud/ipfs/QmRM6rerPF4DNNAvD8SFMkKrv6oxZAPcCVLeRMGKXoK4x9?_gl=1*1ag1yd0*_ga*MTUwMDk3MzYwNi4xNjc1NTAyMDI0*_ga_5RMPXG14TE*MTY3NjEyOTcyMy4xOS4wLjE2NzYxMjk3MjMuNjAuMC4w',{value: ethers.utils.parseEther('0.05')});
+       
+      console.log(ownerBalance);
+
+    });
+  });
+    */
+  
+
