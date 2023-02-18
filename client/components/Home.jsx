@@ -1,10 +1,10 @@
 import WalletBalance from './WalletBalance';
 import { useEffect, useState } from 'react';
-
+import fs from 'fs';
 import { ethers } from 'ethers';
 import FiredGuys from '../../artifacts/contracts/NFT.sol/FunToken.json';
 
-const contractAddress = '0x96cFC09b1C41E3aa03B2bacD2C60D24A7DFe07EE';
+const contractAddress = '0x5c1445a9e241757D877CE5cDc8642545FADA274a';
 
 const provider = new ethers.providers.Web3Provider(window.ethereum);
 
@@ -34,7 +34,11 @@ function Home() {
     const contentId = 'QmW3LQgh6KJNzwt9TsurZVEkszzZjryGXFeed2u4R9Yy1x';
     const metadataURI = `${contentId}/${tokenId}.json`;
     const imageURI = `https://gateway.pinata.cloud/ipfs/${contentId}/${tokenId}.jpg`;
-  
+
+   
+
+
+
     const [isMinted, setIsMinted] = useState(false);
     useEffect(() => {
       getMintedStatus();
@@ -47,12 +51,17 @@ function Home() {
     };
   
     const mintToken = async () => {
-      const connection = contract.connect(signer);
+
+      const SVG =  await fs.readFileSync("/home/boss/nft_test/matedata/images/1470950105.svg", { encoding: "utf8" })
+      const ownerBalance = await contract.svgToEncodePacked(SVG);
+      const encodeSVG = await contract.svgToBase64(ownerBalance);
+
+      const connection = await contract.connect(signer);
       const addr = connection.address;
-      const result = await contract.payToMint(addr, metadataURI, {
+      const result = await contract.payToMint(addr, encodeSVG, {
         value: ethers.utils.parseEther('0.05'),
       });
-  
+      console.log(addr);
       await result.wait();
       getMintedStatus();
       getCount();
