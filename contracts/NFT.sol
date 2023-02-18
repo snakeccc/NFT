@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/Base64.sol";
 
 contract FunToken is ERC721, ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
@@ -14,7 +15,7 @@ contract FunToken is ERC721, ERC721URIStorage, Ownable {
     constructor() ERC721("FunToken", "Fun") {}
 
     function _baseURI() internal pure override returns (string memory) {
-        return "ipfs://";
+        return "data:application/json;base64,";
     }
 
     function safeMint(address to, string memory uri) public onlyOwner {
@@ -47,7 +48,7 @@ contract FunToken is ERC721, ERC721URIStorage, Ownable {
         string memory metadataURI
     ) public payable returns (uint256) {
         require(existingURIs[metadataURI] != 1, "NFT already minted!");
-        require(msg.value >= 0.05 ether, "Need to pay up!");
+        require(msg.value >= 0.001 ether, "Need to pay up!");
 
         uint256 newItemId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
@@ -57,5 +58,41 @@ contract FunToken is ERC721, ERC721URIStorage, Ownable {
         _setTokenURI(newItemId, metadataURI);
 
         return newItemId;
+    }
+
+    function svgToEncodePacked(
+        string memory svg
+    ) public pure returns (string memory) {
+        // example:
+        // '<svg width="500" height="500" viewBox="0 0 285 350" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill="black" d="M150,0,L75,200,L225,200,Z"></path></svg>'
+        // would return ""
+        string memory baseURL = "data:image/svg+xml;base64,";
+        string memory svgBase64Encoded = Base64.encode(
+            bytes(string(abi.encodePacked(svg)))
+        );
+        return string(abi.encodePacked(baseURL, svgBase64Encoded));
+    }
+
+    function svgToBase64(
+        string memory imageURI
+    ) public view returns (string memory) {
+        return
+            string(
+                abi.encodePacked(
+                    _baseURI(),
+                    Base64.encode(
+                        bytes(
+                            abi.encodePacked(
+                                '{"name":"',
+                                name(), // You can add whatever name here
+                                '", "description":"An NFT that changes based on the Chainlink Feed", ',
+                                '"attributes": [{"trait_type": "coolness", "value": 100}], "image":"',
+                                imageURI,
+                                '"}'
+                            )
+                        )
+                    )
+                )
+            );
     }
 }

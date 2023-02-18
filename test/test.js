@@ -1,63 +1,73 @@
-const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
 const { expect } = require("chai");
+const { ethers } = require("ethers");
+const FunToken = require("../artifacts/contracts/NFT.sol/FunToken.json");
+const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
+const hre = require("hardhat");
+const fs = require("fs");
 
-describe("Token contract", function () {
-  async function deployTokenFixture() {
-    const Token = await ethers.getContractFactory("Token");
-    const [owner] = await ethers.getSigners();
+describe("MyContract", function() {
+  async function deployToken() {
+   // 部署合约后，需要提供合约地址和 ABI 来创建合约实例
+const contractAddress = "0x5e3Ef3e00ee7E03bE710582979A38779A3Dd6c9b";
+//const privateKey = "3475fb43dd76c48efaa08a730da357b9e9df750fafbbe33d8a2fdf249c5c80fa";
+const privateKey = "5899420858906eb61100f277cbb46a3690a2ca2137b0bb612eeee542f5992f27";
 
-    const hardhatToken = await Token.deploy();
+const contractABI = FunToken.abi;
+// 连接以太坊网络
+const provider = new ethers.providers.JsonRpcProvider("https://goerli.infura.io/v3/e02c3806bdc04456a47ba78b7a94b7aa");
+const wallet = new ethers.Wallet(privateKey, provider);
+const owner = wallet.connect(provider);
+// 创建已部署合约实例
+const contract = new ethers.Contract(contractAddress, contractABI, owner);
 
-    await hardhatToken.deployed();
-
-    // Fixtures can return anything you consider useful for your tests
-    return { Token, hardhatToken, owner };
+        // Fixtures can return anything you consider useful for your tests
+    return { contract,owner };
   }
 
-  it("Should assign the total supply of tokens to the owner", async function () {
-    const { hardhatToken, owner } = await loadFixture(deployTokenFixture);
-
-    const ownerBalance = await hardhatToken.balanceOf(owner.address);
-    expect(await hardhatToken.totalSupply()).to.equal(ownerBalance);
-  });
-
-  it("Should transfer tokens between accounts", async function () {
-    const { hardhatToken, owner, addr1, addr2 } = await loadFixture(
-      deployTokenFixture
-    );
-
-    // Transfer 50 tokens from owner to addr1
-    await expect(
-      hardhatToken.transfer(addr1.address, 50)
-    ).to.changeTokenBalances(hardhatToken, [owner, addr1], [-50, 50]);
-
-    // Transfer 50 tokens from addr1 to addr2
-    // We use .connect(signer) to send a transaction from another account
-    await expect(
-      hardhatToken.connect(addr1).transfer(addr2.address, 50)
-    ).to.changeTokenBalances(hardhatToken, [addr1, addr2], [-50, 50]);
-  });
-});
 
 
 
-  
+  async function deployTokenlocation() {
+    const Token = await hre.ethers.getContractFactory("FunToken");
+    const [owner, addr1] = await hre.ethers.getSigners();
+    
 
- /* describe("Token contract", async function () {
-     it("Deployments", async function () {
-      
-const [owner] = await ethers.getSigners();
-  
-      const Token = await ethers.getContractFactory("FunToken");
-  
-      const hardhatToken = await Token.deploy();
-  
-      const ownerBalance = await hardhatToken.payToMint(owner.address,'https://gateway.pinata.cloud/ipfs/QmRM6rerPF4DNNAvD8SFMkKrv6oxZAPcCVLeRMGKXoK4x9?_gl=1*1ag1yd0*_ga*MTUwMDk3MzYwNi4xNjc1NTAyMDI0*_ga_5RMPXG14TE*MTY3NjEyOTcyMy4xOS4wLjE2NzYxMjk3MjMuNjAuMC4w',{value: ethers.utils.parseEther('0.05')});
-       
-      console.log(ownerBalance);
+    const contract = await Token.deploy();
+
+    await contract.deployed();
+
+    // Fixtures can return anything you consider useful for your tests
+    return { Token, contract, owner, addr1};
+  }
+
+  it("FunToken test", async function () {
+    const { Token, contract, owner, addr1 } = await loadFixture(deployTokenlocation);
+    const SVG = await fs.readFileSync("/home/boss/nft_test/matedata/images/1470950105.svg", { encoding: "utf8" })
+    const ownerBalance = await contract.svgToEncodePacked(SVG);
+    const encodeSVG = await contract.svgToBase64(ownerBalance);
+     const MintSVG = await contract.payToMint(owner.address,encodeSVG, {
+      value: ethers.utils.parseEther("0.001"), // 发送 ETH
 
     });
+   // console.log(ownerBalance);
+    //console.log(owner.address);
+    //console.log(MintSVG);
   });
-    */
-  
 
+
+    it("FunToken goerli",async function () {
+      const { contract, owner } = await loadFixture(deployToken);
+    const SVG = await fs.readFileSync("/home/boss/nft_test/matedata/images/1470950105.svg", { encoding: "utf8" })
+    const ownerBalance = await contract.svgToEncodePacked(SVG);
+    const encodeSVG = await contract.svgToBase64(ownerBalance);
+    const MintSVG = await contract.payToMint(owner.address,encodeSVG, {
+      value: ethers.utils.parseEther("0.001"), // 发送 ETH
+    });
+    console.log(encodeSVG);
+    
+
+
+    });
+
+ 
+});

@@ -1,9 +1,10 @@
 const pinataSDK = require("@pinata/sdk")
 const fs = require("fs")
 const path = require("path")
-
-const pinataApiKey = 'cd0b48850fa73faffceb'
-const pinataApiSecret = '508b7ee80f19221e58163f2ebf67c9e85fdc5fc46d6942bf64da3fca57a6ea45'
+//7f2342bbc6758538cf7f,984118bfce14fba7622f
+//c0ed6e3449363b6c3dbdb6a691886b7ecef0ee154a896987475bf222b1279a73,e3435e038e36e031a867a7762abc60abc5428404788714b13ba4b02ff19dded5
+const pinataApiKey = '7f2342bbc6758538cf7f'
+const pinataApiSecret = 'c0ed6e3449363b6c3dbdb6a691886b7ecef0ee154a896987475bf222b1279a73'
 const pinata = new pinataSDK(pinataApiKey, pinataApiSecret)
 
 const metadataTemplate =  {
@@ -75,10 +76,10 @@ async function handleTokenUris(imagesLocation) {
         let tokenUriMetadata = { ...metadataTemplate }
         tokenUriMetadata.name = files[imageUploadResponseIndex].replace(".png", "")
         tokenUriMetadata.description = `An adorable ${tokenUriMetadata.name} pup!`
-        tokenUriMetadata.image = `ipfs://${imageUploadResponses[imageUploadResponseIndex].IpfsHash}`
+        tokenUriMetadata.image = `https://ipfs.io/ipfs/${imageUploadResponses[imageUploadResponseIndex].IpfsHash}`
         console.log(`Uploading ${tokenUriMetadata.name}...`)
         const metadataUploadResponse = await storeTokenUriMetadata(tokenUriMetadata)
-        tokenUris.push(`ipfs://${metadataUploadResponse.IpfsHash}`)
+        tokenUris.push(`https://ipfs.io/ipfs/${metadataUploadResponse.IpfsHash}`)
     }
     console.log("Token URIs uploaded! They are:")
     console.log(tokenUris)
@@ -90,8 +91,18 @@ handleTokenUris('./images').then(() => process.exit(0))
   console.error(error);
   process.exit(1);
 });
+
+
  /*storeImages('./images').then(() => process.exit(0))
  .catch((error) => {
    console.error(error);
    process.exit(1);
- });*/
+ });
+
+ pinata.testAuthentication().then((result) => {
+    //handle successful authentication here
+    console.log(result);
+}).catch((err) => {
+    //handle error here
+    console.log(err);
+});*/
